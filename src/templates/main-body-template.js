@@ -5,6 +5,7 @@ import expandedEndpointTemplate from '~/templates/expanded-endpoint-template';
 import focusedEndpointTemplate from '~/templates/focused-endpoint-template';
 import overviewTemplate from '~/templates/overview-template';
 import endpointTemplate from '~/templates/endpoint-template';
+import { extensionsTemplates } from '~/templates/extensions-template';
 import serverTemplate from '~/templates/server-template';
 import securitySchemeTemplate, { recoverPersistedApiKeys } from '~/templates/security-scheme-template';
 import headerTemplate from '~/templates/header-template';
@@ -105,6 +106,7 @@ export default function mainBodyTemplate(isMini = false, showExpandCollapse = tr
                         ? expandedEndpointTemplate.call(this)
                         : endpointTemplate.call(this, showExpandCollapse, showTags, pathsExpanded)
                       }
+                      ${this.showInfo === 'true' ? extensionsTemplates.call(this) : ''}
                     `
                   }
                   </div>

@@ -57,6 +57,7 @@ export default async function ProcessSpec(specUrl, generateMissingTags = false, 
 
   // Info Description Headers
   const infoDescriptionHeaders = jsonParsedSpec.info?.description ? getHeadersFromMarkdown(jsonParsedSpec.info.description) : [];
+  const extensions = resolveExtensions(jsonParsedSpec);
 
   // Security Scheme
   const securitySchemes = [];
@@ -152,8 +153,24 @@ export default async function ProcessSpec(specUrl, generateMissingTags = false, 
     externalDocs: jsonParsedSpec.externalDocs,
     securitySchemes,
     servers,
+    extensions,
   };
   return parsedSpec;
+}
+
+function resolveExtensions(resolvedSpec) {
+  if (!resolvedSpec?.info)
+    return [];
+  let extensions = [];
+  for (const key in resolvedSpec?.info) {
+    if (!key.startsWith('x-'))
+      continue;
+    const value = resolvedSpec.info[key]
+    if (!value || typeof value !== "string")
+      continue;
+    extensions.push({ name: key, description: value, headers: getHeadersFromMarkdown(value) })
+  }
+  return extensions;
 }
 
 function getHeadersFromMarkdown(markdownContent) {
