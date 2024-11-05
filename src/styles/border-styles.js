@@ -1,4 +1,4 @@
-import { css } from 'lit-element';
+import { css } from 'lit';
 
 export default css`
 .border-top {
@@ -15,10 +15,10 @@ export default css`
 .pad-8-16{
   padding: 8px 16px;
 }
-.pad-top-8{
+.pad-top-8 {
   padding-top: 8px;
 }
-.mar-top-8{
+.mar-top-8 {
   margin-top: 8px;
 }
 `;

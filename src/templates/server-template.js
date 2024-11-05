@@ -1,6 +1,6 @@
-import { html } from 'lit-element';
+import { html } from 'lit';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js'; // eslint-disable-line import/extensions
 import { marked } from 'marked';
-import { unsafeHTML } from 'lit-html/directives/unsafe-html';
 
 export function setApiServer(serverUrl) {
   const serverObj = this.resolvedSpec?.servers.find((s) => s.url === serverUrl);
@@ -35,8 +35,8 @@ function serverVarsTemplate() {
   // const selectedServerObj = this.resolvedSpec.servers.find((v) => (v.url === this.selectedServer));
   return this.selectedServer && this.selectedServer.variables
     ? html`
-    <div class="table-title"> SERVER VARIABLES</div>
-    <table class='m-table'>
+    <div class="table-title">SERVER VARIABLES</div>
+    <table class='m-table' role='presentation'>
       ${Object.entries(this.selectedServer.variables).map((kv) => html`
         <tr>
           <td style="vertical-align: middle;" >${kv[0]}</td>
@@ -86,7 +86,7 @@ export default function serverTemplate() {
   if (!this.resolvedSpec || this.resolvedSpec.specLoadError) { return ''; }
   return html`
   <section id = 'servers' part="section-servers" style="text-align:left; direction:ltr; margin-top:24px; margin-bottom:24px;" class='regular-font observe-me ${'read focused'.includes(this.renderStyle) ? 'section-gap--read-mode' : 'section-gap'}'>
-    <div class = 'sub-title'>API SERVER</div>
+    <div part = "section-servers-title" class = "sub-title">API SERVER</div>
     <div class = 'mono-font' style='margin: 12px 0; font-size:calc(var(--font-size-small) + 1px);'>
       ${!this.resolvedSpec.servers || this.resolvedSpec.servers?.length === 0
         ? ''

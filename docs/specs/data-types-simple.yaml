@@ -9,6 +9,25 @@ paths:
       summary: Demonstrates data-types and constraints
       description: Request-Parameters and Response-Schema contains various data types and constrains. Check out how is it desplayed below
       parameters:
+        - in: query
+          name: search
+          examples:
+            example1:
+              summary: s1
+              value: v1
+            example2:
+              summary: s2
+              value: v2
+          x-fill-example: no
+          schema:
+            type: string
+          description: term to search (use "*" to show all)
+        - in: query
+          name: id
+          example: my-id
+          schema:
+            type: string
+            format: uuid
         - name: height
           in: query
           description: height (in inches)
@@ -23,7 +42,19 @@ paths:
           in: query
           description: Name of a person
           required: true
-          example: Iron Man
+          examples:
+            empty: ## just an empty value ## fixes auto filling example
+              value:
+              summary: No Name
+            male-name:
+              value: James
+              summary: Male name
+            female-name:
+              value: Ria
+              summary: Female Name
+            gender-nutral-name:
+              value: Charlie
+              summary: Gender Neutral Name
           schema:
             type: string
             minimum: 3
@@ -56,6 +87,7 @@ paths:
         - name: interests
           in: query
           required: true
+          x-fill-example: yes
           examples:
             - computers
             - movies
@@ -184,8 +216,8 @@ components:
           type: string
           minLength: 1
     Id:
-      type: integer
-      format: int64
+      type: string
+      format: uuid
       readOnly: true
     Tag:
       type: object

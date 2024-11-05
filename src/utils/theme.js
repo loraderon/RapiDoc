@@ -1,4 +1,4 @@
-import { html } from 'lit-element';
+import { html } from 'lit';
 import ColorUtils from '~/utils/color-utils';
 /* Generates an schema object containing type and constraint info */
 export default function setTheme(baseTheme, theme = {}) {
@@ -7,11 +7,11 @@ export default function setTheme(baseTheme, theme = {}) {
   // Common Theme colors
   const primaryColor = theme.primaryColor ? theme.primaryColor : baseTheme === 'dark' ? '#f76b39' : '#ff591e';
   const primaryColorInvert = ColorUtils.color.invert(primaryColor);
-  const primaryColorTrans = ColorUtils.color.opacity(primaryColor, '0.8');
+  const primaryColorTrans = ColorUtils.color.opacity(primaryColor, '0.4');
 
   // Dark and Light Theme colors
   if (baseTheme === 'dark') {
-    const bg1 = theme.bg1 ? theme.bg1 : '#333';
+    const bg1 = theme.bg1 ? theme.bg1 : '#2a2b2c';
     const fg1 = theme.fg1 ? theme.fg1 : '#bbb';
 
     const bg2 = theme.bg2 ? theme.bg2 : ColorUtils.color.brightness(bg1, 5); // or #383838;
@@ -21,16 +21,18 @@ export default function setTheme(baseTheme, theme = {}) {
     const fg3 = theme.fg3 ? theme.fg3 : ColorUtils.color.brightness(fg1, -20); // or #aaa
     const lightFg = theme.fg3 ? theme.fg3 : ColorUtils.color.brightness(fg1, -65); // or #777
     const inlineCodeFg = theme.inlineCodeFg ? theme.inlineCodeFg : '#aaa';
-    const selectionBg = '#bbb';
-    const selectionFg = '#eee';
+    const selectionBg = fg2;
+    const selectionFg = bg2;
 
     const headerColor = theme.headerColor ? theme.headerColor : ColorUtils.color.brightness(bg1, 10);
 
     const navBgColor = theme.navBgColor ? theme.navBgColor : ColorUtils.color.brightness(bg1, 10);
-    const navTextColor = theme.navTextColor ? theme.navTextColor : ColorUtils.color.opacity(ColorUtils.color.invert(navBgColor), '0.65');
+    const navTextColor = theme.navTextColor ? theme.navTextColor : ColorUtils.color.opacity(ColorUtils.color.invert(navBgColor), '0.50');
     const navHoverBgColor = theme.navHoverBgColor ? theme.navHoverBgColor : ColorUtils.color.brightness(navBgColor, -15);
     const navHoverTextColor = theme.navHoverTextColor ? theme.navHoverTextColor : ColorUtils.color.invert(navBgColor);
     const navAccentColor = theme.navAccentColor ? theme.navAccentColor : ColorUtils.color.brightness(primaryColor, 25);
+    const navAccentTextColor = theme.navAccentTextColor ? theme.navAccenttextColor : ColorUtils.color.invert(navAccentColor);
+
     const overlayBg = 'rgba(80, 80, 80, 0.4)';
 
     newTheme = {
@@ -54,7 +56,7 @@ export default function setTheme(baseTheme, theme = {}) {
       navHoverBgColor,
       navHoverTextColor,
       navAccentColor,
-
+      navAccentTextColor,
       headerColor,
       headerColorInvert: ColorUtils.color.invert(headerColor),
       headerColorDarker: ColorUtils.color.brightness(headerColor, -20),
@@ -96,7 +98,7 @@ export default function setTheme(baseTheme, theme = {}) {
       codeOperatorColor: theme.codeOperatorColor || '#67cdcc',
     };
   } else {
-    const bg1 = (theme.bg1 ? theme.bg1 : '#ffffff');
+    const bg1 = (theme.bg1 ? theme.bg1 : '#fafbfc');
     const fg1 = (theme.fg1 ? theme.fg1 : '#444444');
     const bg2 = theme.bg2 ? theme.bg2 : ColorUtils.color.brightness(bg1, -5); // or '#fafafa'
     const bg3 = theme.bg3 ? theme.bg3 : ColorUtils.color.brightness(bg1, -15); // or '#f6f6f6'
@@ -105,10 +107,8 @@ export default function setTheme(baseTheme, theme = {}) {
     const fg3 = theme.fg3 ? theme.fg3 : ColorUtils.color.brightness(fg1, 30); // or #666
     const lightFg = theme.fg3 ? theme.fg3 : ColorUtils.color.brightness(fg1, 70); // or #999
     const inlineCodeFg = theme.inlineCodeFg ? theme.inlineCodeFg : 'brown';
-
-    const selectionBg = '#444';
-    const selectionFg = '#eee';
-
+    const selectionBg = fg2;
+    const selectionFg = bg2;
     const headerColor = theme.headerColor ? theme.headerColor : ColorUtils.color.brightness(bg1, -180);
 
     /*
@@ -118,11 +118,12 @@ export default function setTheme(baseTheme, theme = {}) {
     const navHoverTextColor = theme.navHoverTextColor ? theme.navHoverTextColor : primaryColor;
     const navAccentColor = theme.navAccentColor ? theme.navAccentColor : primaryColor;
     */
-    const navBgColor = theme.navBgColor ? theme.navBgColor : ColorUtils.color.brightness(bg1, -180);
+    const navBgColor = theme.navBgColor ? theme.navBgColor : ColorUtils.color.brightness(bg1, -200);
     const navTextColor = theme.navTextColor ? theme.navTextColor : ColorUtils.color.opacity(ColorUtils.color.invert(navBgColor), '0.65');
     const navHoverBgColor = theme.navHoverBgColor ? theme.navHoverBgColor : ColorUtils.color.brightness(navBgColor, -15);
     const navHoverTextColor = theme.navHoverTextColor ? theme.navHoverTextColor : ColorUtils.color.invert(navBgColor);
     const navAccentColor = theme.navAccentColor ? theme.navAccentColor : ColorUtils.color.brightness(primaryColor, 25);
+    const navAccentTextColor = theme.navAccentTextColor ? theme.navAccenttextColor : ColorUtils.color.invert(navAccentColor);
     const overlayBg = 'rgba(0, 0, 0, 0.4)';
 
     newTheme = {
@@ -146,7 +147,7 @@ export default function setTheme(baseTheme, theme = {}) {
       navHoverBgColor,
       navHoverTextColor,
       navAccentColor,
-
+      navAccentTextColor,
       headerColor,
       headerColorInvert: ColorUtils.color.invert(headerColor),
       headerColorDarker: ColorUtils.color.brightness(headerColor, -20),
@@ -206,10 +207,12 @@ export default function setTheme(baseTheme, theme = {}) {
       : '7px 16px 7px 10px')};
     
     --resp-area-height: ${this.responseAreaHeight};
-    --font-size-small:  ${this.fontSize === 'default' ? '12px' : (this.fontSize === 'large' ? '13px' : '14px')};
-    --font-size-mono:   ${this.fontSize === 'default' ? '13px' : (this.fontSize === 'large' ? '14px' : '15px')};
+    --font-size-small: ${this.fontSize === 'default' ? '12px' : (this.fontSize === 'large' ? '13px' : '14px')};
+    --font-size-mono: ${this.fontSize === 'default' ? '13px' : (this.fontSize === 'large' ? '14px' : '15px')};
     --font-size-regular: ${this.fontSize === 'default' ? '14px' : (this.fontSize === 'large' ? '15px' : '16px')};
     --dialog-z-index: 1000;
+
+    --focus-shadow: 0 0 0 1px transparent, 0 0 0 3px ${newTheme.primaryColorTrans};
 
     /* Theme specific styles */  
     --bg:${newTheme.bg1};
@@ -259,6 +262,14 @@ export default function setTheme(baseTheme, theme = {}) {
     --nav-hover-bg-color:${newTheme.navHoverBgColor};
     --nav-hover-text-color:${newTheme.navHoverTextColor};
     --nav-accent-color:${newTheme.navAccentColor};
+    --nav-accent-text-color:${newTheme.navAccentTextColor};
+
+    /* Nav API Method Colors*/
+    --nav-get-color:${newTheme.blue};
+    --nav-put-color:${newTheme.orange};
+    --nav-post-color:${newTheme.green};
+    --nav-delete-color:${newTheme.red};
+    --nav-head-color:${newTheme.yellow};
 
     /* Primary Colors */  
     --primary-color:${newTheme.primaryColor};

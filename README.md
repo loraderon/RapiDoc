@@ -1,10 +1,10 @@
-<img alt="MrinDoc logo" src="https://github.com/mrin9/RapiDoc/blob/master/logo.png" width="60px" />
+<img alt="MrinDoc logo" src="https://github.com/rapi-doc/RapiDoc/blob/master/logo.png" width="60px" />
 
 
 <p align="center">
     <img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square"/>
-    <img src="https://img.shields.io/github/size/mrin9/rapidoc/dist/rapidoc-min.js.svg?colorB=blue&label=minified&style=flat-square">
-    <img src="https://img.shields.io/github/size/mrin9/rapidoc/dist/rapidoc-min.js.gz.svg?colorB=blue&label=zip&style=flat-square">
+    <img src="https://img.shields.io/github/size/rapi-doc/rapidoc/dist/rapidoc-min.js.svg?colorB=blue&label=minified&style=flat-square">
+    <img src="https://img.shields.io/github/size/rapi-doc/rapidoc/dist/rapidoc-min.js.gz.svg?colorB=blue&label=zip&style=flat-square">
     <a href="https://www.webcomponents.org/element/rapidoc" alt="published on webcomponents.org">
         <img src="https://img.shields.io/badge/webcomponents.org-rapidoc-blue.svg?style=social"/>
     </a>
@@ -12,6 +12,8 @@
 
 # RapiDoc
 Custom Element for Open-API spec viewing
+
+> Sponsored by [Zuplo](https://zuplo.link/rapidoc-2) - Get a Stripe-like API experience for your customers in minutes - documentation, rate-limiting and API-key auth in minutes. 
 
 ## Features
 - Supports Swagger 2.0, OpenAPI 3.x.x 
@@ -42,10 +44,10 @@ Custom Element for Open-API spec viewing
 
 
 ## Documentation
-[Check out the usage and demos](https://mrin9.github.io/RapiDoc/)
+[Check out the usage and demos](https://rapi-doc.github.io/RapiDoc/)
 
 ## Examples
-[Examples and Test cases](https://mrin9.github.io/RapiDoc/list.html)
+[Examples and Test cases](https://rapi-doc.github.io/RapiDoc/list.html)
 
 
 ## Build Process
@@ -57,8 +59,19 @@ npm install
 # use it in the script tag of your html <script type="text/javascript" src="rapidoc-min.js"></script></body>
 npm run build 
 
-# for developement use yarn serve (this will start an webserver at port 8080, then navigate to localhost:8080) 
+# for development use yarn serve (this will start an webserver at port 8080, then navigate to localhost:8080) 
 npm run serve
 ```
 
-## Contribution
+## Roadmap
+- ✅ Upgrade to use `lit 2`
+- Pre Rendering / Server Side Rendering (SSR) of RapiDoc
+- Improve PDF generation of OpenAPI spec Using RapiPDF
+- Create a Command Line interface (CLI) to make it automation friendly
+- Add localization support
+- Follow Web Content Accessibility Guidelines (WCAG 2)
+- Improve Homepage, Documentation and Examples
+- Create groundwork for automated testing
+- Create a live playground (Something like swagger editor)
+- Create a short animation/video to show how RapiDoc/RapiPDF works
+

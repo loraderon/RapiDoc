@@ -1,10 +1,25 @@
 /* eslint-disable no-use-before-define */
+/* eslint import/no-unresolved: [2, { commonjs: true, amd: true }] */
 import OpenApiParser from '@apitools/openapi-parser';
 import { marked } from 'marked';
 import { invalidCharsRegEx, rapidocApiKey, sleep } from '~/utils/common-utils';
 
-export default async function ProcessSpec(specUrl, generateMissingTags = false, sortTags = false, sortEndpointsBy = '', attrApiKey = '', attrApiKeyLocation = '', attrApiKeyValue = '', serverUrl = '') {
+export default async function ProcessSpec(
+  specUrl,
+  generateMissingTags = false,
+  sortTags = false,
+  sortSchemas = false,
+  sortEndpointsBy = '',
+  attrApiKey = '',
+  attrApiKeyLocation = '',
+  attrApiKeyValue = '',
+  serverUrl = '',
+  matchPaths = '',
+  matchType = '',
+  removeEndpointsWithBadgeLabelAs = '',
+) {
   let jsonParsedSpec;
+
   try {
     this.requestUpdate(); // important to show the initial loader
     let specMeta;
@@ -15,7 +30,7 @@ export default async function ProcessSpec(specUrl, generateMissingTags = false, 
     }
     await sleep(0); // important to show the initial loader (allows for rendering updates)
 
-    // If  JSON Schema Viewer
+    // If JSON Schema Viewer
     if (specMeta.resolvedSpec?.jsonSchemaViewer && specMeta.resolvedSpec?.schemaAndExamples) {
       this.dispatchEvent(new CustomEvent('before-render', { detail: { spec: specMeta.resolvedSpec } }));
       const schemaAndExamples = Object.entries(specMeta.resolvedSpec.schemaAndExamples).map((v) => ({ show: true, expanded: true, selectedExample: null, name: v[0], elementId: v[0].replace(invalidCharsRegEx, '-'), ...v[1] }));
@@ -27,8 +42,10 @@ export default async function ProcessSpec(specUrl, generateMissingTags = false, 
       };
       return parsedSpec;
     }
+
+    // If RapiDoc or RapiDocMini
     if (specMeta.spec && (specMeta.spec.components || specMeta.spec.info || specMeta.spec.servers || specMeta.spec.tags || specMeta.spec.paths)) {
-      jsonParsedSpec = specMeta.spec;
+      jsonParsedSpec = filterPaths(specMeta.spec, matchPaths, matchType, removeEndpointsWithBadgeLabelAs);
       this.dispatchEvent(new CustomEvent('before-render', { detail: { spec: jsonParsedSpec } }));
     } else {
       console.info('RapiDoc: %c There was an issue while parsing the spec %o ', 'color:orangered', specMeta); // eslint-disable-line no-console
@@ -53,7 +70,7 @@ export default async function ProcessSpec(specUrl, generateMissingTags = false, 
   const tags = groupByTags(jsonParsedSpec, sortEndpointsBy, generateMissingTags, sortTags);
 
   // Components
-  const components = getComponents(jsonParsedSpec);
+  const components = getComponents(jsonParsedSpec, sortSchemas);
 
   // Info Description Headers
   const infoDescriptionHeaders = jsonParsedSpec.info?.description ? getHeadersFromMarkdown(jsonParsedSpec.info.description) : [];
@@ -67,18 +84,18 @@ export default async function ProcessSpec(specUrl, generateMissingTags = false, 
       if (!securitySchemeSet.has(kv[0])) {
         securitySchemeSet.add(kv[0]);
         const securityObj = { securitySchemeId: kv[0], ...kv[1] };
+        securityObj.in = 'header';
+        securityObj.name = 'Authorization'; // Name of the header/cookie/api-key
+        securityObj.nameId = kv[1].name || kv[0]; // Name of the security-scheme
+        securityObj.user = '';
+        securityObj.password = '';
+        securityObj.clientId = '';
+        securityObj.clientSecret = '';
         securityObj.value = '';
         securityObj.finalKeyValue = '';
-        if (kv[1].type === 'apiKey' || kv[1].type === 'http') {
+        if (kv[1].type === 'apiKey') {
           securityObj.in = kv[1].in || 'header';
           securityObj.name = kv[1].name || 'Authorization';
-          securityObj.user = '';
-          securityObj.password = '';
-        } else if (kv[1].type === 'oauth2') {
-          securityObj.in = 'header';
-          securityObj.name = 'Authorization';
-          securityObj.clientId = '';
-          securityObj.clientSecret = '';
         }
         securitySchemes.push(securityObj);
       }
@@ -91,7 +108,8 @@ export default async function ProcessSpec(specUrl, generateMissingTags = false, 
       description: 'api-key provided in rapidoc element attributes',
       type: 'apiKey',
       oAuthFlow: '',
-      name: attrApiKey,
+      name: attrApiKey, // Name of the header/cookie/api-key
+      nameId: attrApiKey, // Name of the security-scheme
       in: attrApiKeyLocation,
       value: attrApiKeyValue,
       finalKeyValue: attrApiKeyValue,
@@ -101,19 +119,19 @@ export default async function ProcessSpec(specUrl, generateMissingTags = false, 
   // Updated Security Type Display Text based on Type
   securitySchemes.forEach((v) => {
     if (v.type === 'http') {
-      v.typeDisplay = v.scheme === 'basic' ? 'HTTP Basic' : 'HTTP Bearer';
+      v.typeDisplay = v.scheme === 'basic' ? 'HTTP Basic' : `HTTP Bearer ${v.nameId}`;
     } else if (v.type === 'apiKey') {
       v.typeDisplay = `API Key (${v.name})`;
     } else if (v.type === 'oauth2') {
       v.typeDisplay = `OAuth (${v.securitySchemeId})`;
     } else {
-      v.typeDisplay = v.type;
+      v.typeDisplay = v.type || 'None';
     }
   });
 
   // Servers
   let servers = [];
-  if (jsonParsedSpec.servers && Array.isArray(jsonParsedSpec.servers)) {
+  if (jsonParsedSpec.servers && Array.isArray(jsonParsedSpec.servers) && jsonParsedSpec.servers.length > 0) {
     jsonParsedSpec.servers.forEach((v) => {
       let computedUrl = v.url.trim();
       if (!(computedUrl.startsWith('http') || computedUrl.startsWith('//') || computedUrl.startsWith('{'))) {
@@ -142,7 +160,7 @@ export default async function ProcessSpec(specUrl, generateMissingTags = false, 
   } else {
     jsonParsedSpec.servers = [{ url: 'http://localhost', computedUrl: 'http://localhost' }];
   }
-  servers = jsonParsedSpec.servers;
+  servers = jsonParsedSpec.servers; // eslint-disable-line prefer-destructuring
   const parsedSpec = {
     specLoadError: false,
     isSpecLoading: false,
@@ -173,13 +191,67 @@ function resolveExtensions(resolvedSpec) {
   return extensions;
 }
 
+function filterPaths(openApiObject, matchPaths = '', matchType = '', removeEndpointsWithBadgeLabelAs = '') {
+  const filteredPaths = {};
+
+  // Convert the removePathsWithBadgeLabeledAs to an array if provided
+  const labelsToRemove = removeEndpointsWithBadgeLabelAs.split(',').map((label) => label.trim().toLowerCase()).filter(Boolean);
+
+  // Helper function to check if a path should be included based on matchPaths
+  function pathMatches(pathsKey, httpMethod) {
+    if (!matchPaths) {
+      return true; // If no matchPaths provided, include everything
+    }
+    const fullPath = `${httpMethod} ${pathsKey}`.toLowerCase(); // Construct "method path" string
+    if (matchType === 'regex') {
+      const matchPathsRegex = new RegExp(matchPaths, 'i');
+      return matchPathsRegex.test(fullPath);
+    }
+    return fullPath.includes(matchPaths.toLowerCase());
+  }
+
+  // Helper function to check if the badges contain any label that needs to be removed
+  function containsLabelToRemove(badges) {
+    return badges.some((badge) => labelsToRemove.includes(badge?.label.toLowerCase()));
+  }
+
+  // Loop through the paths in the openApiObject
+  Object.entries(openApiObject.paths).forEach(([pathsKey, methods]) => {
+    const filteredMethods = {};
+
+    Object.entries(methods).forEach(([httpMethod, methodDetails]) => {
+      const badges = methodDetails['x-badges'];
+
+      // Filter by matchPaths
+      if (pathMatches(pathsKey, httpMethod)) {
+        if (badges && Array.isArray(badges)) {
+          // Filter out based on removePathsWithBadgeLabeledAs
+          if (!containsLabelToRemove(badges)) {
+            filteredMethods[httpMethod] = methodDetails;
+          }
+        } else {
+          // No badges present, include the method
+          filteredMethods[httpMethod] = methodDetails;
+        }
+      }
+    });
+
+    if (Object.keys(filteredMethods).length > 0) {
+      filteredPaths[pathsKey] = filteredMethods;
+    }
+  });
+
+  openApiObject.paths = filteredPaths;
+  return openApiObject;
+}
+
 function getHeadersFromMarkdown(markdownContent) {
   const tokens = marked.lexer(markdownContent);
   const headers = tokens.filter((v) => v.type === 'heading' && v.depth <= 2);
   return headers || [];
 }
 
-function getComponents(openApiSpec) {
+function getComponents(openApiSpec, sortSchemas = false) {
   if (!openApiSpec.components) {
     return [];
   }
@@ -201,6 +273,10 @@ function getComponents(openApiSpec) {
 
     switch (component) {
       case 'schemas':
+        if (sortSchemas) {
+          subComponents.sort((c1, c2) => c1.name.localeCompare(c2.name));
+        }
+
         cmpName = 'Schemas';
         cmpDescription = 'Schemas allows the definition of input and output data types. These types can be objects, but also primitives and arrays.';
         break;
@@ -258,11 +334,12 @@ function getComponents(openApiSpec) {
 
 function groupByTags(openApiSpec, sortEndpointsBy, generateMissingTags = false, sortTags = false) {
   const supportedMethods = ['get', 'put', 'post', 'delete', 'patch', 'head', 'options']; // this is also used for ordering endpoints by methods
-  const tags = openApiSpec.tags && Array.isArray(openApiSpec.tags)
+  const tags = openApiSpec.tags && Array.isArray(openApiSpec.tags) && openApiSpec.tags.length > 0
     ? openApiSpec.tags.map((v) => ({
       show: true,
       elementId: `tag--${v.name.replace(invalidCharsRegEx, '-')}`,
       name: v.name,
+      displayName: v['x-displayName'] || v.name,
       description: v.description || '',
       headers: v.description ? getHeadersFromMarkdown(v.description) : [],
       paths: [],
@@ -298,7 +375,7 @@ function groupByTags(openApiSpec, sortEndpointsBy, generateMissingTags = false, 
               pathTags.push(pathOrHookNameKey);
             } else {
               // firstWordEndIndex -= 1;
-              pathTags.push(pathOrHookNameKey.substr(0, firstWordEndIndex));
+              pathTags.push(pathOrHookNameKey.substring(0, firstWordEndIndex));
             }
           } else {
             pathTags.push('General ⦂');
@@ -330,7 +407,7 @@ function groupByTags(openApiSpec, sortEndpointsBy, generateMissingTags = false, 
           // Generate a short summary which is broken
           let shortSummary = (pathOrHookObj.summary || pathOrHookObj.description || `${methodName.toUpperCase()} ${pathOrHookName}`).trim();
           if (shortSummary.length > 100) {
-            shortSummary = shortSummary.split(/[.|!|?]\s|[\r?\n]/)[0]; // take the first line (period or carriage return)
+            [shortSummary] = shortSummary.split(/[.|!|?]\s|[\r?\n]/); // take the first line (period or carriage return)
           }
           // Merge Common Parameters with This methods parameters
           let finalParameters = [];
@@ -364,6 +441,7 @@ function groupByTags(openApiSpec, sortEndpointsBy, generateMissingTags = false, 
             expandedAtLeastOnce: false,
             summary: (pathOrHookObj.summary || ''),
             description: (pathOrHookObj.description || ''),
+            externalDocs: pathOrHookObj.externalDocs,
             shortSummary,
             method: methodName,
             path: pathOrHookName,

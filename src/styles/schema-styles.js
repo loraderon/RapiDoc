@@ -1,8 +1,11 @@
-import { css } from 'lit-element';
+import { css } from 'lit';
 
 export default css`
 
 *, *:before, *:after { box-sizing: border-box; }
+:host {
+  container-type: inline-size;
+}
 
 .tr {
   display: flex;
@@ -10,6 +13,7 @@ export default css`
   width: 100%;
   box-sizing: content-box;
   border-bottom: 1px dotted transparent;
+  transition: max-height 0.3s ease-out;
 }
 .td {
   display: block;
@@ -21,9 +25,31 @@ export default css`
   word-break: break-all;
 }
 
-.collapsed-descr .key{
+.collapsed-all-descr .key {
   overflow:hidden;
 }
+.expanded-all-descr .key-descr .descr-expand-toggle {
+  display:none;
+}
+
+.key-descr .descr-expand-toggle {
+  display:inline-block;
+  user-select:none;
+  color: var(--fg);
+  cursor: pointer;
+  transform: rotate(45deg);
+  transition: transform .2s ease;
+}
+
+.expanded-descr .key-descr .descr-expand-toggle {
+  transform: rotate(270deg)
+}
+
+.key-descr .descr-expand-toggle:hover {
+  color: var(--primary-color);
+}
+
+.expanded-descr .more-content { display:none; }
 
 .key-descr {
   font-family:var(--font-regular);
@@ -37,13 +63,6 @@ export default css`
   max-height:auto;
   overflow:hidden;
   display: none;
-}
-.collapsed-descr .tr {
-  max-height:20px;
-}
-
-.tr.xxx-of{
-  border-top: 1px dotted var(--primary-color);
 }
 
 .xxx-of-key {
@@ -59,18 +78,19 @@ export default css`
 }
 
 .xxx-of-descr {
-    font-family: var(--font-regular);
-    color: var(--primary-color);
-    font-size: calc(var(--font-size-small) - 1px);
-    margin-left: 2px;
+  font-family: var(--font-regular);
+  color: var(--primary-color);
+  font-size: calc(var(--font-size-small) - 1px);
+  margin-left: 2px;
 }
 
-.stri, .string, .uri, .url, .byte, .bina, .date, .pass, .ipv4, .ipv4, .uuid, .emai, .host {color:var(--green);}
-.inte, .numb, .number, .int6, .int3, .floa, .doub, .deci .blue {color:var(--blue);}
-.null {color:var(--red);}
-.bool, .boolean{color:var(--orange)}
-.enum {color:var(--purple)}
-.recu {color:var(--brown)}
+.stri, .string, .uri, .url, .byte, .bina, .date, .pass, .ipv4, .ipv4, .uuid, .emai, .host { color:var(--green); }
+.inte, .numb, .number, .int6, .int3, .floa, .doub, .deci .blue { color:var(--blue); }
+.null { color:var(--red); }
+.bool, .boolean { color:var(--orange) }
+.enum { color:var(--purple) }
+.cons { color:var(--purple) }
+.recu { color:var(--brown) }
 .toolbar {
   display:flex;
   width:100%;
@@ -88,16 +108,13 @@ export default css`
   font-weight: bold;
   text-transform: uppercase;
 }
-.schema-root-type.xxx-of {
-  display:none;
-}
 .toolbar-item:first-of-type { margin:0 2px 0 0;}
 
-@media only screen and (min-width: 500px) {
+@container (min-width: 500px) {
   .key-descr {
     display: block;
   }
-  .expanded-descr .key-descr{
+  .expanded-descr .key-descr {
     display: block;
   }
 }

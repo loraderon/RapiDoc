@@ -1,8 +1,9 @@
-import { css } from 'lit-element';
+import { css } from 'lit';
 
 export default css`
 #api-info {
-  font-size:calc(var(--font-size-regular) - 1px);margin-top:8px
+  font-size: calc(var(--font-size-regular) - 1px);
+  margin-top: 8px;
   margin-left: -15px;
 }
 

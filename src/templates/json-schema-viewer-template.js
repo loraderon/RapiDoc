@@ -1,11 +1,11 @@
-import { html } from 'lit-element';
+import { html } from 'lit';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js'; // eslint-disable-line import/extensions
 import { marked } from 'marked';
-import { unsafeHTML } from 'lit-html/directives/unsafe-html';
 
 // Templates
 import overviewTemplate from '~/templates/overview-template';
 import headerTemplate from '~/templates/header-template';
-import { schemaInObjectNotation, generateExample } from '~/utils/schema-utils';
+import { schemaInObjectNotation, generateExample, standardizeExample } from '~/utils/schema-utils';
 import '~/components/json-tree';
 import '~/components/schema-tree';
 import SetTheme from '~/utils/theme';
@@ -49,7 +49,7 @@ function jsonSchemaBodyTemplate() {
     ${this.showInfo === 'true' ? overviewTemplate.call(this) : ''}
     <div style="font-size:var(--font-size-regular);">
     ${this.resolvedSpec.schemaAndExamples.map((jSchemaBody) => {
-      const examplesObj = generateExample(jSchemaBody.schema, 'json', jSchemaBody.examples, jSchemaBody.example, true, false, 'json', true);
+      const examplesObj = generateExample(jSchemaBody.schema, 'json', standardizeExample(jSchemaBody.examples), standardizeExample(jSchemaBody.example), true, false, 'json', true);
       jSchemaBody.selectedExample = examplesObj[0]?.exampleId;
       return html`
         <section id='${jSchemaBody.elementId}' class='json-schema-and-example regular-font' style="display:flex; flex-direction: column; border:1px solid var(--border-color); margin-bottom:32px; border-top: 5px solid var(--border-color)">
@@ -63,7 +63,7 @@ function jsonSchemaBodyTemplate() {
                 .data = "${schemaInObjectNotation(jSchemaBody.schema, {})}"
                 schema-expand-level = "${this.schemaExpandLevel}"
                 schema-description-expanded = "${this.schemaDescriptionExpanded}"
-                allow-schema-description-expand-toggle = "${this.allowSchemaDescriptionExpandToggle}",
+                allow-schema-description-expand-toggle = "${this.allowSchemaDescriptionExpandToggle}"
                 schema-hide-read-only = "false"
                 schema-hide-write-only = "false"
               > </schema-tree>
@@ -99,7 +99,7 @@ function jsonSchemaBodyTemplate() {
 
 // Json Schema Root Template
 export default function jsonSchemaViewerTemplate(isMini = false) {
-// export default function jsonSchemaViewerTemplate(isMini = false, showExpandCollapse = true, showTags = true, pathsExpanded = false) {
+// export default function jsonSchemaViewerTemplate(isMini = false, pathsExpanded = false) {
   if (!this.resolvedSpec) {
     return '';
   }
@@ -113,6 +113,7 @@ export default function jsonSchemaViewerTemplate(isMini = false) {
     navHoverBgColor: isValidHexColor(this.navHoverBgColor) ? this.navHoverBgColor : '',
     navHoverTextColor: isValidHexColor(this.navHoverTextColor) ? this.navHoverTextColor : '',
     navAccentColor: isValidHexColor(this.navAccentColor) ? this.navAccentColor : '',
+    navAccenttextColor: isValidHexColor(this.navAccentTextColor) ? this.navAccentTextColor : '',
   };
   /* eslint-disable indent */
   if (this.resolvedSpec.specLoadError) {
@@ -154,7 +155,7 @@ export default function jsonSchemaViewerTemplate(isMini = false) {
     <!-- Header -->
     ${this.showHeader === 'false' ? '' : headerTemplate.call(this)}
     
-    <div id='the-main-body' class="body" dir= ${this.pageDirection}>
+    <div id='the-main-body' class="body ${this.cssClasses}" dir= ${this.pageDirection}>
 
       <!-- Side Nav -->
       ${jsonSchemaNavTemplate.call(this)}

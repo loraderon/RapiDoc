@@ -19,7 +19,7 @@ export function sleep(ms) {
 }
 
 export function copyToClipboard(data, e) {
-  const btnEl = e.currentTarget;
+  const btnEl = e.target;
   const textArea = document.createElement('textarea');
   textArea.value = data;
   textArea.style.position = 'fixed'; // avoid scrolling to bottom
@@ -49,17 +49,13 @@ export async function wait(ms) {
   });
 }
 
-export function componentIsInSearch(searchVal, component) {
+export function getMatchedComponents(searchVal, component) {
   return component.name.toLowerCase().includes(searchVal.toLowerCase());
 }
 
-export function pathIsInSearch(searchVal, path, matchType = 'includes') {
-  if (matchType === 'includes') {
-    const stringToSearch = `${path.method} ${path.path} ${path.summary || path.description || ''} ${path.operationId || ''}`.toLowerCase();
-    return stringToSearch.includes(searchVal.toLowerCase());
-  }
-  const regex = new RegExp(searchVal, 'i');
-  return regex.test(`${path.method} ${path.path}`);
+export function getMatchedPaths(searchVal, path, tagName = '') {
+  const stringToSearch = `${path.method} ${path.path} ${path.summary || ''} ${path.description || ''} ${path.operationId || ''} ${tagName}`.toLowerCase();
+  return stringToSearch.includes(searchVal.toLowerCase());
 }
 
 export function schemaKeys(schemaProps, result = new Set()) {
@@ -90,7 +86,7 @@ export function advancedSearch(searchVal, allSpecTags, searchOptions = []) {
         stringToSearch = path.path;
       }
       if (searchOptions.includes('search-api-descr')) {
-        stringToSearch = `${stringToSearch} ${path.summary || path.description || ''}`;
+        stringToSearch = `${stringToSearch} ${(path.summary || '') + (path.description || '')}`;
       }
       if (searchOptions.includes('search-api-params')) {
         stringToSearch = `${stringToSearch} ${path.parameters?.map((v) => v.name).join(' ') || ''}`;
@@ -124,6 +120,7 @@ export function advancedSearch(searchVal, allSpecTags, searchOptions = []) {
   return pathsMatched;
 }
 
+/*
 export function prettyXml(sourceXmlString) {
   const xmlDoc = new DOMParser().parseFromString(sourceXmlString, 'text/xml');
   const xsltDoc = new DOMParser().parseFromString([
@@ -143,10 +140,6 @@ export function prettyXml(sourceXmlString) {
   xsltProcessor.importStylesheet(xsltDoc);
   const resultDoc = xsltProcessor.transformToDocument(xmlDoc);
   return new XMLSerializer().serializeToString(resultDoc);
-}
-/*
-export function hasValidPathInUrlHash(tags) {
-  return tags.find((tag) => tag.paths.find((path) => window.location.hash.substring(1) === path.elementId));
 }
 */
 
