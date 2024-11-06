@@ -1,4 +1,4 @@
-import { css } from 'lit-element';
+import { css } from 'lit';
 
 export default css`
 .tab-panel {
@@ -6,6 +6,7 @@ export default css`
 }
 .tab-buttons {
   height:30px;
+  padding: 4px 4px 0 4px;
   border-bottom: 1px solid var(--light-border-color) ;
   align-items: stretch;
   overflow-y: hidden;
@@ -41,5 +42,6 @@ export default css`
 .tab-content {
   margin:-1px 0 0 0;
   position:relative;
+  min-height: 50px;
 }
 `;

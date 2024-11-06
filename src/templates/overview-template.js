@@ -1,5 +1,5 @@
-import { html } from 'lit-element';
-import { unsafeHTML } from 'lit-html/directives/unsafe-html';
+import { html } from 'lit';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js'; // eslint-disable-line import/extensions
 import { marked } from 'marked';
 import { downloadResource, viewResource } from '~/utils/common-utils';
 
@@ -16,7 +16,7 @@ export default function overviewTemplate() {
       class="observe-me ${this.renderStyle === 'view' ? 'section-gap' : 'section-gap--read-mode'}">
       ${this.resolvedSpec?.info
         ? html`
-          <div id="api-title" part="label-overview-title" style="font-size:32px">
+          <div id="api-title" part="section-overview-title" style="font-size:32px">
             ${this.resolvedSpec.info.title}
             ${!this.resolvedSpec.info.version ? '' : html`
               <span style = 'font-size:var(--font-size-small);font-weight:bold'>
@@ -50,7 +50,7 @@ export default function overviewTemplate() {
             ${this.specUrl && this.allowSpecFileDownload === 'true'
               ? html`
                 <div style="display:flex; margin:12px 0; gap:8px; justify-content: start;">
-                  <button class="m-btn thin-border" style="width:170px" part="btn btn-outline" @click='${(e) => { downloadResource(this.specUrl, 'openapi-spec', e); }}'>Download OpenAPI spec</button>
+                  <button class="m-btn thin-border" style="min-width:170px" part="btn btn-outline" @click='${(e) => { downloadResource(this.specUrl, 'openapi-spec', e); }}'>Download OpenAPI spec</button>
                   ${this.specUrl?.trim().toLowerCase().endsWith('json')
                     ? html`<button class="m-btn thin-border" style="width:200px" part="btn btn-outline" @click='${(e) => { viewResource(this.specUrl, e); }}'>View OpenAPI spec (New Tab)</button>`
                     : ''

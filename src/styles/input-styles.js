@@ -1,4 +1,4 @@
-import { css } from 'lit-element';
+import { css } from 'lit';
 
 /* eslint-disable max-len */
 export default css`
@@ -15,10 +15,10 @@ export default css`
   white-space: nowrap;
   border: 2px solid var(--primary-color);
   background-color:transparent;
-  transition: background-color 0.2s;
   user-select: none;
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  transition-duration: 0.75s;
 }
 .m-btn.primary {
   background-color: var(--primary-color);
@@ -37,14 +37,19 @@ export default css`
 .m-btn.nav:hover { 
   background-color: var(--nav-accent-color);
 }
-.m-btn:disabled{ 
+.m-btn:disabled { 
   background-color: var(--bg3);
   color: var(--fg3);
   border-color: var(--fg3);
   cursor: not-allowed;
   opacity: 0.4;
 }
-.toolbar-btn{
+.m-btn:active {
+  filter: brightness(75%);
+  transform: scale(0.95);
+  transition:scale 0s;
+}
+.toolbar-btn {
   cursor: pointer;
   padding: 4px;
   margin:0 2px;
@@ -105,15 +110,6 @@ input[type="password"]::placeholder {
   opacity:1;
 }
 
-select:focus,
-textarea:focus,
-input[type="text"]:focus,
-input[type="password"]:focus,
-textarea:active,
-input[type="text"]:active,
-input[type="password"]:active {
-  border:1px solid var(--primary-color);
-}
 
 input[type="file"]{
   font-family: var(--font-regular);
@@ -167,10 +163,6 @@ textarea::-webkit-scrollbar-thumb {
   margin-bottom:2px;
 }
 
-input[type="checkbox"]:focus{
-  outline:0;
-}
-
 /* Toggle Body */
 input[type="checkbox"] {
   appearance: none;
@@ -203,7 +195,7 @@ input[type="checkbox"]:after {
 
 /* Toggle Body - Checked */
 input[type="checkbox"]:checked {
-  box-shadow: inset 0 0 0 13px var(--green);
+  background-color: var(--green);
   border-color: var(--green);
 }
 /* Toggle Thumb - Checked*/
@@ -212,5 +204,4 @@ input[type="checkbox"]:checked:after {
   left: 16px;
   right: 1px;
   transition: border .25s, left .15s .25s, right .25s .175s;
-}
-`;
+}`;

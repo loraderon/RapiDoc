@@ -1,24 +1,61 @@
 /* eslint-disable no-use-before-define */
+/* eslint import/no-unresolved: [2, { commonjs: true, amd: true }] */
 import OpenApiParser from '@apitools/openapi-parser';
 import { marked } from 'marked';
 import { invalidCharsRegEx, rapidocApiKey, sleep } from '~/utils/common-utils';
 
-export default async function ProcessSpec(specUrl, generateMissingTags = false, sortTags = false, sortEndpointsBy = '', attrApiKey = '', attrApiKeyLocation = '', attrApiKeyValue = '', serverUrl = '') {
+export default async function ProcessSpec(
+  specUrl,
+  generateMissingTags = false,
+  sortTags = false,
+  sortSchemas = false,
+  sortEndpointsBy = '',
+  attrApiKey = '',
+  attrApiKeyLocation = '',
+  attrApiKeyValue = '',
+  serverUrl = '',
+  matchPaths = '',
+  matchType = '',
+  removeEndpointsWithBadgeLabelAs = '',
+) {
   let jsonParsedSpec;
+
   try {
     this.requestUpdate(); // important to show the initial loader
     let specMeta;
     if (typeof specUrl === 'string') {
-      specMeta = await OpenApiParser.resolve({ url: specUrl, allowMetaPatches: false }); // Swagger(specUrl);
+      specMeta = await OpenApiParser.resolve({
+        url: specUrl,
+        allowMetaPatches: false,
+      }); // Swagger(specUrl);
     } else {
-      specMeta = await OpenApiParser.resolve({ spec: specUrl, allowMetaPatches: false }); // Swagger({ spec: specUrl });
+      specMeta = await OpenApiParser.resolve({
+        spec: specUrl,
+        allowMetaPatches: false,
+      }); // Swagger({ spec: specUrl });
     }
     await sleep(0); // important to show the initial loader (allows for rendering updates)
 
-    // If  JSON Schema Viewer
-    if (specMeta.resolvedSpec?.jsonSchemaViewer && specMeta.resolvedSpec?.schemaAndExamples) {
-      this.dispatchEvent(new CustomEvent('before-render', { detail: { spec: specMeta.resolvedSpec } }));
-      const schemaAndExamples = Object.entries(specMeta.resolvedSpec.schemaAndExamples).map((v) => ({ show: true, expanded: true, selectedExample: null, name: v[0], elementId: v[0].replace(invalidCharsRegEx, '-'), ...v[1] }));
+    // If JSON Schema Viewer
+    if (
+      specMeta.resolvedSpec?.jsonSchemaViewer
+      && specMeta.resolvedSpec?.schemaAndExamples
+    ) {
+      this.dispatchEvent(
+        new CustomEvent('before-render', {
+          detail: { spec: specMeta.resolvedSpec },
+        }),
+      );
+      const schemaAndExamples = Object.entries(
+        specMeta.resolvedSpec.schemaAndExamples,
+      ).map((v) => ({
+        show: true,
+        expanded: true,
+        selectedExample: null,
+        name: v[0],
+        elementId: v[0].replace(invalidCharsRegEx, '-'),
+        ...v[1],
+      }));
       const parsedSpec = {
         specLoadError: false,
         isSpecLoading: false,
@@ -27,37 +64,70 @@ export default async function ProcessSpec(specUrl, generateMissingTags = false, 
       };
       return parsedSpec;
     }
-    if (specMeta.spec && (specMeta.spec.components || specMeta.spec.info || specMeta.spec.servers || specMeta.spec.tags || specMeta.spec.paths)) {
-      jsonParsedSpec = specMeta.spec;
-      this.dispatchEvent(new CustomEvent('before-render', { detail: { spec: jsonParsedSpec } }));
+
+    // If RapiDoc or RapiDocMini
+    if (
+      specMeta.spec
+      && (specMeta.spec.components
+        || specMeta.spec.info
+        || specMeta.spec.servers
+        || specMeta.spec.tags
+        || specMeta.spec.paths)
+    ) {
+      jsonParsedSpec = filterPaths(
+        specMeta.spec,
+        matchPaths,
+        matchType,
+        removeEndpointsWithBadgeLabelAs,
+      );
+      this.dispatchEvent(
+        new CustomEvent('before-render', { detail: { spec: jsonParsedSpec } }),
+      );
     } else {
-      console.info('RapiDoc: %c There was an issue while parsing the spec %o ', 'color:orangered', specMeta); // eslint-disable-line no-console
+      console.info(
+        'RapiDoc: %c There was an issue while parsing the spec %o ',
+        'color:orangered',
+        specMeta,
+      ); // eslint-disable-line no-console
       return {
         specLoadError: true,
         isSpecLoading: false,
         info: {
           title: 'Error loading the spec',
-          description: specMeta.response?.url ? `${specMeta.response?.url} ┃ ${specMeta.response?.status}  ${specMeta.response?.statusText}` : 'Unable to load the Spec',
+          description: specMeta.response?.url
+            ? `${specMeta.response?.url} ┃ ${specMeta.response?.status}  ${specMeta.response?.statusText}`
+            : 'Unable to load the Spec',
           version: ' ',
         },
         tags: [],
       };
     }
   } catch (err) {
-    console.info('RapiDoc: %c There was an issue while parsing the spec %o ', 'color:orangered', err); // eslint-disable-line no-console
+    console.info(
+      'RapiDoc: %c There was an issue while parsing the spec %o ',
+      'color:orangered',
+      err,
+    ); // eslint-disable-line no-console
   }
 
   // const pathGroups = groupByPaths(jsonParsedSpec);
 
   // Tags with Paths and WebHooks
-  const tags = groupByTags(jsonParsedSpec, sortEndpointsBy, generateMissingTags, sortTags);
+  const tags = groupByTags(
+    jsonParsedSpec,
+    sortEndpointsBy,
+    generateMissingTags,
+    sortTags,
+  );
 
   // Components
-  const components = getComponents(jsonParsedSpec);
+  const components = getComponents(jsonParsedSpec, sortSchemas);
 
   // Info Description Headers
-  const infoDescriptionHeaders = jsonParsedSpec.info?.description ? getHeadersFromMarkdown(jsonParsedSpec.info.description) : [];
-  const extensions = resolveExtensions(jsonParsedSpec);
+  const infoDescriptionHeaders = jsonParsedSpec.info?.description
+    ? getHeadersFromMarkdown(jsonParsedSpec.info.description)
+    : [];
+  const extensionSections = resolveExtensionSections(jsonParsedSpec);
 
   // Security Scheme
   const securitySchemes = [];
@@ -67,18 +137,18 @@ export default async function ProcessSpec(specUrl, generateMissingTags = false, 
       if (!securitySchemeSet.has(kv[0])) {
         securitySchemeSet.add(kv[0]);
         const securityObj = { securitySchemeId: kv[0], ...kv[1] };
+        securityObj.in = 'header';
+        securityObj.name = 'Authorization'; // Name of the header/cookie/api-key
+        securityObj.nameId = kv[1].name || kv[0]; // Name of the security-scheme
+        securityObj.user = '';
+        securityObj.password = '';
+        securityObj.clientId = '';
+        securityObj.clientSecret = '';
         securityObj.value = '';
         securityObj.finalKeyValue = '';
-        if (kv[1].type === 'apiKey' || kv[1].type === 'http') {
+        if (kv[1].type === 'apiKey') {
           securityObj.in = kv[1].in || 'header';
           securityObj.name = kv[1].name || 'Authorization';
-          securityObj.user = '';
-          securityObj.password = '';
-        } else if (kv[1].type === 'oauth2') {
-          securityObj.in = 'header';
-          securityObj.name = 'Authorization';
-          securityObj.clientId = '';
-          securityObj.clientSecret = '';
         }
         securitySchemes.push(securityObj);
       }
@@ -91,7 +161,8 @@ export default async function ProcessSpec(specUrl, generateMissingTags = false, 
       description: 'api-key provided in rapidoc element attributes',
       type: 'apiKey',
       oAuthFlow: '',
-      name: attrApiKey,
+      name: attrApiKey, // Name of the header/cookie/api-key
+      nameId: attrApiKey, // Name of the security-scheme
       in: attrApiKeyLocation,
       value: attrApiKeyValue,
       finalKeyValue: attrApiKeyValue,
@@ -101,22 +172,32 @@ export default async function ProcessSpec(specUrl, generateMissingTags = false, 
   // Updated Security Type Display Text based on Type
   securitySchemes.forEach((v) => {
     if (v.type === 'http') {
-      v.typeDisplay = v.scheme === 'basic' ? 'HTTP Basic' : 'HTTP Bearer';
+      v.typeDisplay = v.scheme === 'basic' ? 'HTTP Basic' : `HTTP Bearer ${v.nameId}`;
     } else if (v.type === 'apiKey') {
       v.typeDisplay = `API Key (${v.name})`;
     } else if (v.type === 'oauth2') {
       v.typeDisplay = `OAuth (${v.securitySchemeId})`;
     } else {
-      v.typeDisplay = v.type;
+      v.typeDisplay = v.type || 'None';
     }
   });
 
   // Servers
   let servers = [];
-  if (jsonParsedSpec.servers && Array.isArray(jsonParsedSpec.servers)) {
+  if (
+    jsonParsedSpec.servers
+    && Array.isArray(jsonParsedSpec.servers)
+    && jsonParsedSpec.servers.length > 0
+  ) {
     jsonParsedSpec.servers.forEach((v) => {
       let computedUrl = v.url.trim();
-      if (!(computedUrl.startsWith('http') || computedUrl.startsWith('//') || computedUrl.startsWith('{'))) {
+      if (
+        !(
+          computedUrl.startsWith('http')
+          || computedUrl.startsWith('//')
+          || computedUrl.startsWith('{')
+        )
+      ) {
         if (window.location.origin.startsWith('http')) {
           v.url = window.location.origin + v.url;
           computedUrl = v.url;
@@ -138,11 +219,15 @@ export default async function ProcessSpec(specUrl, generateMissingTags = false, 
   } else if (serverUrl) {
     jsonParsedSpec.servers = [{ url: serverUrl, computedUrl: serverUrl }];
   } else if (window.location.origin.startsWith('http')) {
-    jsonParsedSpec.servers = [{ url: window.location.origin, computedUrl: window.location.origin }];
+    jsonParsedSpec.servers = [
+      { url: window.location.origin, computedUrl: window.location.origin },
+    ];
   } else {
-    jsonParsedSpec.servers = [{ url: 'http://localhost', computedUrl: 'http://localhost' }];
+    jsonParsedSpec.servers = [
+      { url: 'http://localhost', computedUrl: 'http://localhost' },
+    ];
   }
-  servers = jsonParsedSpec.servers;
+  servers = jsonParsedSpec.servers; // eslint-disable-line prefer-destructuring
   const parsedSpec = {
     specLoadError: false,
     isSpecLoading: false,
@@ -153,24 +238,87 @@ export default async function ProcessSpec(specUrl, generateMissingTags = false, 
     externalDocs: jsonParsedSpec.externalDocs,
     securitySchemes,
     servers,
-    extensions,
+    extensionSections,
   };
   return parsedSpec;
 }
 
-function resolveExtensions(resolvedSpec) {
-  if (!resolvedSpec?.info)
-    return [];
-  let extensions = [];
+function resolveExtensionSections(resolvedSpec) {
+  if (!resolvedSpec?.info) return [];
+  const extensionSections = [];
   for (const key in resolvedSpec?.info) {
-    if (!key.startsWith('x-'))
-      continue;
-    const value = resolvedSpec.info[key]
-    if (!value || typeof value !== "string")
-      continue;
-    extensions.push({ name: key, description: value, headers: getHeadersFromMarkdown(value) })
+    if (!key.startsWith('x-section-')) continue;
+    const value = resolvedSpec.info[key];
+    if (!value || typeof value !== 'string') continue;
+    extensionSections.push({
+      name: key,
+      description: value,
+      headers: getHeadersFromMarkdown(value),
+    });
   }
-  return extensions;
+  return extensionSections;
+}
+
+function filterPaths(
+  openApiObject,
+  matchPaths = '',
+  matchType = '',
+  removeEndpointsWithBadgeLabelAs = '',
+) {
+  const filteredPaths = {};
+
+  // Convert the removePathsWithBadgeLabeledAs to an array if provided
+  const labelsToRemove = removeEndpointsWithBadgeLabelAs
+    .split(',')
+    .map((label) => label.trim().toLowerCase())
+    .filter(Boolean);
+
+  // Helper function to check if a path should be included based on matchPaths
+  function pathMatches(pathsKey, httpMethod) {
+    if (!matchPaths) {
+      return true; // If no matchPaths provided, include everything
+    }
+    const fullPath = `${httpMethod} ${pathsKey}`.toLowerCase(); // Construct "method path" string
+    if (matchType === 'regex') {
+      const matchPathsRegex = new RegExp(matchPaths, 'i');
+      return matchPathsRegex.test(fullPath);
+    }
+    return fullPath.includes(matchPaths.toLowerCase());
+  }
+
+  // Helper function to check if the badges contain any label that needs to be removed
+  function containsLabelToRemove(badges) {
+    return badges.some((badge) => labelsToRemove.includes(badge?.label.toLowerCase()));
+  }
+
+  // Loop through the paths in the openApiObject
+  Object.entries(openApiObject.paths).forEach(([pathsKey, methods]) => {
+    const filteredMethods = {};
+
+    Object.entries(methods).forEach(([httpMethod, methodDetails]) => {
+      const badges = methodDetails['x-badges'];
+
+      // Filter by matchPaths
+      if (pathMatches(pathsKey, httpMethod)) {
+        if (badges && Array.isArray(badges)) {
+          // Filter out based on removePathsWithBadgeLabeledAs
+          if (!containsLabelToRemove(badges)) {
+            filteredMethods[httpMethod] = methodDetails;
+          }
+        } else {
+          // No badges present, include the method
+          filteredMethods[httpMethod] = methodDetails;
+        }
+      }
+    });
+
+    if (Object.keys(filteredMethods).length > 0) {
+      filteredPaths[pathsKey] = filteredMethods;
+    }
+  });
+
+  openApiObject.paths = filteredPaths;
+  return openApiObject;
 }
 
 function getHeadersFromMarkdown(markdownContent) {
@@ -179,7 +327,7 @@ function getHeadersFromMarkdown(markdownContent) {
   return headers || [];
 }
 
-function getComponents(openApiSpec) {
+function getComponents(openApiSpec, sortSchemas = false) {
   if (!openApiSpec.components) {
     return [];
   }
@@ -189,7 +337,10 @@ function getComponents(openApiSpec) {
     for (const sComponent in openApiSpec.components[component]) {
       const scmp = {
         show: true,
-        id: `${component.toLowerCase()}-${sComponent.toLowerCase()}`.replace(invalidCharsRegEx, '-'),
+        id: `${component.toLowerCase()}-${sComponent.toLowerCase()}`.replace(
+          invalidCharsRegEx,
+          '-',
+        ),
         name: sComponent,
         component: openApiSpec.components[component][sComponent],
       };
@@ -201,6 +352,10 @@ function getComponents(openApiSpec) {
 
     switch (component) {
       case 'schemas':
+        if (sortSchemas) {
+          subComponents.sort((c1, c2) => c1.name.localeCompare(c2.name));
+        }
+
         cmpName = 'Schemas';
         cmpDescription = 'Schemas allows the definition of input and output data types. These types can be objects, but also primitives and arrays.';
         break;
@@ -227,11 +382,11 @@ function getComponents(openApiSpec) {
       case 'securitySchemes':
         cmpName = 'Security Schemes';
         // eslint-disable-next-line max-len
-        cmpDescription = 'Defines a security scheme that can be used by the operations. Supported schemes are HTTP authentication, an API key (either as a header, a cookie parameter or as a query parameter), OAuth2\'s common flows(implicit, password, client credentials and authorization code) as defined in RFC6749, and OpenID Connect Discovery.';
+        cmpDescription = "Defines a security scheme that can be used by the operations. Supported schemes are HTTP authentication, an API key (either as a header, a cookie parameter or as a query parameter), OAuth2's common flows(implicit, password, client credentials and authorization code) as defined in RFC6749, and OpenID Connect Discovery.";
         break;
       case 'links':
         cmpName = 'Links';
-        cmpDescription = 'Links represent a possible design-time link for a response. The presence of a link does not guarantee the caller\'s ability to successfully invoke it, rather it provides a known relationship and traversal mechanism between responses and other operations.';
+        cmpDescription = "Links represent a possible design-time link for a response. The presence of a link does not guarantee the caller's ability to successfully invoke it, rather it provides a known relationship and traversal mechanism between responses and other operations.";
         break;
       case 'callbacks':
         cmpName = 'Callbacks';
@@ -256,13 +411,29 @@ function getComponents(openApiSpec) {
   return components || [];
 }
 
-function groupByTags(openApiSpec, sortEndpointsBy, generateMissingTags = false, sortTags = false) {
-  const supportedMethods = ['get', 'put', 'post', 'delete', 'patch', 'head', 'options']; // this is also used for ordering endpoints by methods
-  const tags = openApiSpec.tags && Array.isArray(openApiSpec.tags)
+function groupByTags(
+  openApiSpec,
+  sortEndpointsBy,
+  generateMissingTags = false,
+  sortTags = false,
+) {
+  const supportedMethods = [
+    'get',
+    'put',
+    'post',
+    'delete',
+    'patch',
+    'head',
+    'options',
+  ]; // this is also used for ordering endpoints by methods
+  const tags = openApiSpec.tags
+    && Array.isArray(openApiSpec.tags)
+    && openApiSpec.tags.length > 0
     ? openApiSpec.tags.map((v) => ({
       show: true,
       elementId: `tag--${v.name.replace(invalidCharsRegEx, '-')}`,
       name: v.name,
+      displayName: v['x-displayName'] || v.name,
       description: v.description || '',
       headers: v.description ? getHeadersFromMarkdown(v.description) : [],
       paths: [],
@@ -298,7 +469,7 @@ function groupByTags(openApiSpec, sortEndpointsBy, generateMissingTags = false, 
               pathTags.push(pathOrHookNameKey);
             } else {
               // firstWordEndIndex -= 1;
-              pathTags.push(pathOrHookNameKey.substr(0, firstWordEndIndex));
+              pathTags.push(pathOrHookNameKey.substring(0, firstWordEndIndex));
             }
           } else {
             pathTags.push('General ⦂');
@@ -310,7 +481,9 @@ function groupByTags(openApiSpec, sortEndpointsBy, generateMissingTags = false, 
           let specTagsItem;
 
           if (openApiSpec.tags) {
-            specTagsItem = openApiSpec.tags.find((v) => (v.name.toLowerCase() === tag.toLowerCase()));
+            specTagsItem = openApiSpec.tags.find(
+              (v) => v.name.toLowerCase() === tag.toLowerCase(),
+            );
           }
 
           tagObj = tags.find((v) => v.name === tag);
@@ -320,38 +493,59 @@ function groupByTags(openApiSpec, sortEndpointsBy, generateMissingTags = false, 
               elementId: `tag--${tag.replace(invalidCharsRegEx, '-')}`,
               name: tag,
               description: specTagsItem?.description || '',
-              headers: specTagsItem?.description ? getHeadersFromMarkdown(specTagsItem.description) : [],
+              headers: specTagsItem?.description
+                ? getHeadersFromMarkdown(specTagsItem.description)
+                : [],
               paths: [],
-              expanded: (specTagsItem ? specTagsItem['x-tag-expanded'] !== false : true),
+              expanded: specTagsItem
+                ? specTagsItem['x-tag-expanded'] !== false
+                : true,
             };
             tags.push(tagObj);
           }
 
           // Generate a short summary which is broken
-          let shortSummary = (pathOrHookObj.summary || pathOrHookObj.description || `${methodName.toUpperCase()} ${pathOrHookName}`).trim();
+          let shortSummary = (
+            pathOrHookObj.summary
+            || pathOrHookObj.description
+            || `${methodName.toUpperCase()} ${pathOrHookName}`
+          ).trim();
           if (shortSummary.length > 100) {
-            shortSummary = shortSummary.split(/[.|!|?]\s|[\r?\n]/)[0]; // take the first line (period or carriage return)
+            [shortSummary] = shortSummary.split(/[.|!|?]\s|[\r?\n]/); // take the first line (period or carriage return)
           }
           // Merge Common Parameters with This methods parameters
           let finalParameters = [];
           if (commonParams) {
             if (pathOrHookObj.parameters) {
-              finalParameters = commonParams.filter((commonParam) => {
-                if (!pathOrHookObj.parameters.some((param) => (commonParam.name === param.name && commonParam.in === param.in))) {
-                  return commonParam;
-                }
-              }).concat(pathOrHookObj.parameters);
+              finalParameters = commonParams
+                .filter((commonParam) => {
+                  if (
+                    !pathOrHookObj.parameters.some(
+                      (param) => commonParam.name === param.name
+                        && commonParam.in === param.in,
+                    )
+                  ) {
+                    return commonParam;
+                  }
+                })
+                .concat(pathOrHookObj.parameters);
             } else {
               finalParameters = commonParams.slice(0);
             }
           } else {
-            finalParameters = pathOrHookObj.parameters ? pathOrHookObj.parameters.slice(0) : [];
+            finalParameters = pathOrHookObj.parameters
+              ? pathOrHookObj.parameters.slice(0)
+              : [];
           }
 
           // Filter callbacks to contain only objects.
           if (pathOrHookObj.callbacks) {
-            for (const [callbackName, callbackConfig] of Object.entries(pathOrHookObj.callbacks)) {
-              const filteredCallbacks = Object.entries(callbackConfig).filter((entry) => typeof entry[1] === 'object') || [];
+            for (const [callbackName, callbackConfig] of Object.entries(
+              pathOrHookObj.callbacks,
+            )) {
+              const filteredCallbacks = Object.entries(callbackConfig).filter(
+                (entry) => typeof entry[1] === 'object',
+              ) || [];
               pathOrHookObj.callbacks[callbackName] = Object.fromEntries(filteredCallbacks);
             }
           }
@@ -362,14 +556,20 @@ function groupByTags(openApiSpec, sortEndpointsBy, generateMissingTags = false, 
             expanded: false,
             isWebhook,
             expandedAtLeastOnce: false,
-            summary: (pathOrHookObj.summary || ''),
-            description: (pathOrHookObj.description || ''),
+            summary: pathOrHookObj.summary || '',
+            description: pathOrHookObj.description || '',
+            externalDocs: pathOrHookObj.externalDocs,
             shortSummary,
             method: methodName,
             path: pathOrHookName,
             operationId: pathOrHookObj.operationId,
-            elementId: `${methodName}-${pathOrHookName.replace(invalidCharsRegEx, '-')}`,
-            servers: pathOrHookObj.servers ? commonPathProp.servers.concat(pathOrHookObj.servers) : commonPathProp.servers,
+            elementId: `${methodName}-${pathOrHookName.replace(
+              invalidCharsRegEx,
+              '-',
+            )}`,
+            servers: pathOrHookObj.servers
+              ? commonPathProp.servers.concat(pathOrHookObj.servers)
+              : commonPathProp.servers,
             parameters: finalParameters,
             requestBody: pathOrHookObj.requestBody,
             responses: pathOrHookObj.responses,
@@ -379,19 +579,27 @@ function groupByTags(openApiSpec, sortEndpointsBy, generateMissingTags = false, 
             // commonSummary: commonPathProp.summary,
             // commonDescription: commonPathProp.description,
             xBadges: pathOrHookObj['x-badges'] || undefined,
-            xCodeSamples: pathOrHookObj['x-codeSamples'] || pathOrHookObj['x-code-samples'] || '',
+            xCodeSamples:
+              pathOrHookObj['x-codeSamples']
+              || pathOrHookObj['x-code-samples']
+              || '',
           });
-        });// End of tag path create
+        }); // End of tag path create
       }
     }); // End of Methods
   }
 
-  const tagsWithSortedPaths = tags.filter((tag) => tag.paths && tag.paths.length > 0);
+  const tagsWithSortedPaths = tags.filter(
+    (tag) => tag.paths && tag.paths.length > 0,
+  );
   tagsWithSortedPaths.forEach((tag) => {
     if (sortEndpointsBy === 'method') {
-      tag.paths.sort((a, b) => supportedMethods.indexOf(a.method).toString().localeCompare(supportedMethods.indexOf(b.method)));
+      tag.paths.sort((a, b) => supportedMethods
+        .indexOf(a.method)
+        .toString()
+        .localeCompare(supportedMethods.indexOf(b.method)));
     } else if (sortEndpointsBy === 'summary') {
-      tag.paths.sort((a, b) => (a.shortSummary).localeCompare(b.shortSummary));
+      tag.paths.sort((a, b) => a.shortSummary.localeCompare(b.shortSummary));
     } else if (sortEndpointsBy === 'path') {
       tag.paths.sort((a, b) => a.path.localeCompare(b.path));
     } else if (sortEndpointsBy === 'none') {
@@ -399,5 +607,7 @@ function groupByTags(openApiSpec, sortEndpointsBy, generateMissingTags = false, 
     }
     tag.firstPathId = tag.paths[0].elementId;
   });
-  return sortTags ? tagsWithSortedPaths.sort((a, b) => a.name.localeCompare(b.name)) : tagsWithSortedPaths;
+  return sortTags
+    ? tagsWithSortedPaths.sort((a, b) => a.name.localeCompare(b.name))
+    : tagsWithSortedPaths;
 }

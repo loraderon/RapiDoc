@@ -28,6 +28,7 @@
     https://assets.zuora.com/zuora-documentation/swagger.yaml <<< Large spec with lot of markdown
     ./specs/petstore_anyof.yaml <<< contains complex one-of with inline primitives and recursive objects
     ./specs/oneof1.yaml  <<< nested oneof
+    https://cesdev.eng.sonicwall.com/api/q/openapi
 -->
 <rapi-doc 
   spec-url = "./specs/temp.yaml" 
@@ -35,20 +36,21 @@
   theme = "dark"
   render-style="read" 
   schema-style="tree"
-  use-path-in-nav-bar="true"
+  show-method-in-nav-bar = "true"
+  use-path-in-nav-bar = "true"
   show-components = "true"
   show-info = "true"
   show-header = "true"
   allow-search = "false"  
   allow-advanced-search = "true"
   allow-spec-url-load="false"
-  allow-spec-file-load="false"
   allow-spec-file-download="true"
   allow-server-selection = "true"
   allow-authentication	= "true"
   update-route="false"
   match-type="regex"
   persist-auth="true"
+  scroll-behavior="smooth"
 ></rapi-doc>
 <!--
   <rapi-doc-mini

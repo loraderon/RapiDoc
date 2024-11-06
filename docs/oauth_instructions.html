@@ -22,6 +22,9 @@
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:400,700" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css?family=Lato:300,400&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Exo:wght@300;500&display=swap" rel="stylesheet">
 
   <!-- Code Highlight -->
   <link rel="stylesheet" href="./prismjs/prism.css">
@@ -55,6 +58,14 @@
 </head>
 
 <body>
+  <div style="background-color: white; font-family: exo;font-weight: lighter; font-size:large; display:flex; flex-direction: row; align-items: center;justify-content: space-between">
+    <div style="padding:15px 20px 15px 20px; ">
+      Get a Stripe like API experience for your customers in minutes - documentation, rate-limiting and API-key auth with <a style="font-weight:bold; color:#FF00BD" href="https://zuplo.link/rapidoc-1">zuplo</a>
+    </div>
+    <div style="padding:2px 20px 2px 20px; ">
+      <a class="zuplo-button" href="https://zuplo.link/rapidoc-1">Start free</a>
+    </div>
+  </div>
 
   <div class="banner" style="max-height:400px; overflow:hidden;">
     <div class="topbar">
@@ -70,7 +81,7 @@
           <a class="menu-item" data-action="url" href="./quickstart.html"> Quick Start </a>
           <a class="menu-item" data-action="url" href="./examples.html"> Examples </a>
           <a class="menu-item" data-action="url" href="./api.html"> API </a>
-          <a class="menu-item" data-action="url" href="https://github.com/mrin9/RapiDoc"> GitHub </a>
+          <a class="menu-item" data-action="url" href="https://github.com/rapi-doc/RapiDoc"> GitHub </a>
         </nav>
       </div>  
     </div>
@@ -94,7 +105,7 @@
     <h1> Setting up OAuth with RapiDoc</h1>
     <h2> Demo </h2>
       <ul>
-        <li> Here is a minimal sample spec containing OAuth Authentication schemes (<a href="https://github.com/mrin9/RapiDoc/blob/master/docs/specs/oauth.yaml" target="_blank"> view </a> )</li>
+        <li> Here is a minimal sample spec containing OAuth Authentication schemes (<a href="https://github.com/rapi-doc/RapiDoc/blob/master/docs/specs/oauth.yaml" target="_blank"> view </a> )</li>
         <li> Here is how it is rendered in RapiDoc (<a href="./examples/oauth-demo.html"> view </a>)</li>
       </ul>  
     <h2> Short Version </h2>
@@ -113,7 +124,7 @@
     <p>
       <ul>
         <li>
-          For this demo I am going to use <a href="https://demo.identityserver.io/" target="_blank"> <b>IdentityServer</b> </a>  as the OAuth provider. 
+          For this demo I am going to use <a href="https://demo.duendesoftware.com/" target="_blank"> <b>IdentityServer</b> </a>  as the OAuth provider. 
           This is a demo Identity provider which is pre-configured with some users and supports various oAuth authentication flows
         </li>
         <li>
@@ -171,7 +182,7 @@
       </code>
     </pre>
 
-    <h3> The OpenAPI spec </h3>
+    <h3 id='oauth-demo-spec'> The OpenAPI spec </h3>
     Our demo Identity server provides few sample APIs for testing. 
     <br/>
     Below is the OpenAPI spec which contains couple of APIs protected with identity server. 
@@ -182,21 +193,17 @@
         openapi: 3.0.0
         info:
           title: Identity 4 Server
-          description: Works only on `http://localhost...`
+          description: Test case for oAuth flows
           version: "1.0"
         servers:
-        - url:  https://demo.identityserver.io
+        - url:  https://demo.duendesoftware.com
         paths:
           /api/test:
             get:
               summary: Test API
               security:
                 - short-lived-oauth:
-                  - api
                 - long-lived-oauth:
-                  - api
-                - client-credential-oauth:
-                  - api
               responses:
                 '200':
                   description: Successful operation
@@ -212,12 +219,6 @@
                   - openid
                   - email
                   - profile
-                - client-credential-oauth:
-                  - openid
-                  - email
-                  - profile
-                - basic: []
-                - api-key1: []
               responses:
                 '200':
                   description: Successful operation
@@ -226,45 +227,41 @@
             short-lived-oauth:
               type: oauth2
               description: Provides OAuth token valid for short duration ~75 seconds
-              # vendor-extension x-client-id and x-client-secret to prefill data
+              
+              # pre filling client-id, secret and scopes for (ALL flows)
               x-client-id: interactive.confidential.short
               x-client-secret: secret
+              x-default-scopes:
+                openid
+
               flows:
                 authorizationCode:
-                  authorizationUrl: https://demo.identityserver.io/connect/authorize
+                  authorizationUrl: https://demo.duendesoftware.com/connect/authorize
                   tokenUrl: https://demo.identityserver.io/connect/token
                   scopes:
                     openid: OpenID
                     email: Email 
                     profile: Profile 
-                    api: API 
             long-lived-oauth:
               type: oauth2
               description: Provides an OAuth token thats valid for long durations
-              x-client-id: interactive.confidential
-              x-client-secret: secret
               flows:
                 authorizationCode:
-                  authorizationUrl: https://demo.identityserver.io/connect/authorize
+                  authorizationUrl: https://demo.duendesoftware.com/connect/authorize
                   tokenUrl: https://demo.identityserver.io/connect/token
                   scopes:
                     openid: OpenID
                     email: Email 
                     profile: Profile 
-                    api: API 
-            client-credential-oauth:
-              type: oauth2
-              description: Provides an OAuth token thats valid for long duration
-              x-client-id: m2m
-              x-client-secret: secret
-              flows:
-                clientCredentials:
-                  tokenUrl: https://demo.identityserver.io/connect/token
-                  scopes:
-                    openid: OpenID
-                    email: Email 
-                    profile: Profile 
-                    api: API 
+
+                  # pre filling client-id, secret and scopes for (SPECIFIC flow)
+                  x-client-id: interactive.confidential
+                  x-client-secret: secret
+                  x-default-scopes:
+                    openid
+                  # when x-pkce-only=true, it will not allow to provide or send client_secret through the UI  
+                  x-pkce-only: true
+                  
       </code>
     </pre>
     

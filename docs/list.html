@@ -21,6 +21,9 @@
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:400,700" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css?family=Lato:300,400&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Exo:wght@300;500&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="./index.css">
   <link rel="stylesheet" href="table.css">
@@ -73,6 +76,14 @@
 </head>
 
 <body>
+  <div style="background-color: white; font-family: exo;font-weight: lighter; font-size:large; display:flex; flex-direction: row; align-items: center;justify-content: space-between">
+    <div style="padding:15px 20px 15px 20px; ">
+      Get a Stripe like API experience for your customers in minutes - documentation, rate-limiting and API-key auth with <a style="font-weight:bold; color:#FF00BD" href="https://zuplo.link/rapidoc-1">zuplo</a>
+    </div>
+    <div style="padding:2px 20px 2px 20px; ">
+      <a class="zuplo-button" href="https://zuplo.link/rapidoc-1">Start free</a>
+    </div>
+  </div>
   <div  class="banner" style="max-height:400px; overflow:hidden;">
     <div class="topbar">
       <div class="header">
@@ -86,7 +97,7 @@
           <a class="menu-item" data-action="url" href="./quickstart.html"> Quick Start </a>
           <a class="menu-item" data-action="url" href="./examples.html"> Examples </a>
           <a class="menu-item" data-action="url" href="./api.html"> API </a>
-          <a class="menu-item hide-in-mobile" data-action="url" href="https://github.com/mrin9/RapiDoc"> GitHub </a>
+          <a class="menu-item hide-in-mobile" data-action="url" href="https://github.com/rapi-doc/RapiDoc"> GitHub </a>
         </nav>
       </div>
     </div>
@@ -115,6 +126,15 @@
         <img style="width:32px" src="./images/react-logo.png"/>
         <img style="width:32px" src="./images/vue-logo.png"/>
       </div>
+    </div>
+
+    <div class = "container" style="cursor: pointer;" onclick="window.location='./examples/api-demo.html';">
+      <a href="./examples/api-demo.html"> RapiDoc API Demo </a>
+      <img style="width:32px" src="./images/settings.png"/>
+      <div class = "c-description" >
+        Demo of various UI customization attributes and events
+      </div>
+      <a href="./api.html"> Full API Details </a>
     </div>
 
     <div class = "container" >
@@ -223,6 +243,12 @@
       <a href="./examples/navbar-spacing.html">Navigation Item Spacing</a>
       <div class = "c-description" >
         Compact / Default / Relaxed
+      </div>
+    </div>
+
+    <div class = "container" >
+      <a href="./examples/nav-item-with-method.html">Show color coded API Method in Navigation</a>
+      <div class = "c-description" >
       </div>
     </div>
 
@@ -375,7 +401,8 @@
     <div class = "container">
       <a href="./examples/oauth-vendor-extension.html"> OAuth Extensions</a>
       <div class = "c-description" >
-        Pre fill client-id and client-secret with vendor extension 'x-client-id' and 'x-client-secret'
+        Pre fill client-id and client-secret with vendor extension 'x-client-id' and 'x-client-secret', and pre select
+        desired scopes with vendor extension 'x-default-scopes'
       </div>
     </div>
     <div class = "container">
@@ -511,7 +538,19 @@
       </td></tr>
 
       <tr><td class="mono-bold">
+        <a href="./examples/fill-example-test.html"> Fill various example data types </a>
+      </td></tr>
+
+      <tr><td class="mono-bold">
+        <a href="./examples/schema-title-and-descriptions.html"> Schema Title and Descriptions </a>
+      </td></tr>
+
+      <tr><td class="mono-bold">
         <a href="./examples/readwrite.html"> Read and Write annotations </a>
+      </td></tr>
+
+      <tr><td class="mono-bold">
+        <a href="./examples/schema-read-and-write-only.html"> Schema Read & Write Only attributes in Request, Response, callback and Webhooks  </a>
       </td></tr>
 
       <tr><td class="mono-bold">
@@ -537,6 +576,9 @@
         <a href="./tests/nested-allof-and-oneof.html"> Nested all-of & one-of </a>
       </td></tr>
       <tr><td class="mono-bold">
+        <a href="./examples/oneof-with-refs.html"> One-of with Refs </a>
+      </td></tr>
+      <tr><td class="mono-bold">
         <a href="./examples/xxx-of-nesting-with-expand-level.html"> Nested one-of along with schema expand level restriction </a>
       </td></tr>
       <tr> <td class="mono-bold">
@@ -559,6 +601,22 @@
       <tr><td class="mono-bold">
         <a href="./tests/open-api-3-1.html"> Webhook  </a>
         <span class="gray descr"> Spec containing WebHooks  </span>
+      </td></tr>
+      <tr><td class="mono-bold">
+        <a href="./examples/deprecated-test.html"> Test paths and fields marked deprecated </a>
+        <span class="gray descr"> Shows how deprecated items are displayed in various sections (params / schema / paths)  </span>
+      </td></tr>
+      <tr><td class="mono-bold">
+        <a href="./examples/override-descriptions-from-refs.html"> Override Descriptions from refernces </a>
+        <span class="gray descr"> New in OpenAPI 3.1.0: When a schema is created based on child references, it can override their descriptions </span>
+      </td></tr>
+      <tr><td class="mono-bold">
+        <a href="./examples/header-as-object.html"> Send request-header parameters using object notation </a>
+        <span class="gray descr"> Display how request headers are serealized when they are supplied as object notation and explode=true</span>
+      </td></tr>
+      <tr><td class="mono-bold">
+        <a href="./examples/filter-test.html"> Remove / Include endpoints using 'match-paths' and 'x-badge'  </a>
+        <span class="gray descr"> </span>
       </td></tr>
       <tr><td class="mono-bold">
         <a href="./tests/xxx-of-recursive.html"> Various cases </a>

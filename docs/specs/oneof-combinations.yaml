@@ -5,7 +5,7 @@ info:
 paths:
   /one-of-array-and-object:
     get:
-      summary: One-Of Array and Object
+      summary: Array and Object containing ONE-OF
       tags:
         - ONE-OF Combinations
       responses:
@@ -38,7 +38,8 @@ paths:
                               type: string
   /one-of-primitives-and-object:
     get:
-      summary: One-Of Object and premitives
+      summary: ONE-OF containing Object, premitives & arrays
+      description: This **ONE OF** contains `primitives, arrays, objects, arrays of primitives and array of objects`, 
       tags:
         - ONE-OF Combinations
       responses:
@@ -94,21 +95,21 @@ paths:
                         description: Null with a title
                         title: Null with a title
                       - type: 'null'
-                        description: Null without a title                            
+                        description: Null without a title
                   d:
                     type: string
-  /any-of-options-with-array-as-root:
+  /one-of-options-with-array-as-root:
     post:
-      summary: ANY-OF Options with Array as root
+      summary: ONE-OF Options with Array as root
       tags:
-        - ANY-OF Root as Array / Object
+        - ONE-OF Root as Array / Object
       requestBody:
-        description: ANY OF Option where root element is an array
+        description: ONE OF Option where root element is an array
         required: true
         content:
           application/json:
             schema:
-              anyOf:
+              oneOf:
                 - title: Option 1
                   type: array
                   items:
@@ -127,19 +128,19 @@ paths:
                         type: string
                       pin:
                         type: integer
-  
-  /any-of-options-with-object-as-root:
+
+  /one-of-options-with-object-as-root:
     post:
-      summary: ANY-OF Options with Object as root
+      summary: ONE-OF Options with Object as root
       tags:
-         - ANY-OF Root as Array / Object
+         - ONE-OF Root as Array / Object
       requestBody:
-        description: ANY OF Option where root element is an object
+        description: ONE OF Option where root element is an object
         required: true
         content:
           application/json:
             schema:
-              anyOf:
+              oneOf:
                 - title: Option 1
                   type: object
                   properties:
@@ -154,3 +155,73 @@ paths:
                       type: string
                     zip:
                       type: integer
+  /one-of-options-with-object-sibling:
+    post:
+      summary: ONE-OF Options with Object as sibling
+      tags:
+         - ONE-OF and Object Sibling
+      requestBody:
+        description: ONE OF and Object as sibling
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                person:
+                  type: object
+                  properties:
+                    age:
+                      type: number
+                    name:
+                      type: object
+                      properties:
+                        first:
+                          type: string
+                        last:
+                          type: string
+              oneOf:
+                - title: Option 1
+                  type: object
+                  properties:
+                    oneof_opt1_prop1:
+                      type: string
+                    oneof_opt1_prop2:
+                      type: integer
+                - title: Option 2
+                  type: object
+                  properties:
+                    oneof_opt2_prop1:
+                      type: string
+                    oneof_opt2_prop2:
+                      type: integer
+
+  /one-of-options-with-read-only-items:
+    post:
+      summary: ONE-OF Options with ReadOnly Items
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reference:
+                  oneOf:
+                    - type: object
+                      title: ReadOnly Option
+                      description: Should be ignored as options cant be ReadOnly
+                      properties:
+                        foo:
+                          type: string
+                      readOnly: true
+                    - type: object
+                      title: Contains ReadOnly Props
+                      description: Should be shown as empty object in request bodies
+                      properties:
+                        bar:
+                          type: string
+                          readOnly: true
+      responses:
+        '201':
+          description: Created
+    

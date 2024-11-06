@@ -1,5 +1,5 @@
-import { html } from 'lit-element';
-import { unsafeHTML } from 'lit-html/directives/unsafe-html';
+import { html } from 'lit';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js'; // eslint-disable-line import/extensions
 import { marked } from 'marked';
 import { expandedEndpointBodyTemplate } from '~/templates/expanded-endpoint-template';
 import '~/components/api-request';
@@ -9,7 +9,7 @@ import overviewTemplate from '~/templates/overview-template';
 import serverTemplate from '~/templates/server-template';
 import securitySchemeTemplate from '~/templates/security-scheme-template';
 import { expandCollapseNavBarTag } from '~/templates/navbar-template';
-import { extensionsTemplate } from '~/templates/extensions-template';
+import { extensionSectionTemplate } from '~/templates/extension-sections-template';
 
 function headingRenderer(tagElementId) {
   const renderer = new marked.Renderer();
@@ -39,7 +39,7 @@ function defaultContentTemplate() {
 /* eslint-disable indent */
 function focusedTagBodyTemplate(tag) {
   return html`
-    <h1 id="${tag.elementId}">${tag.name}</h1>
+    <h1 id="${tag.elementId}">${tag.displayName || tag.name}</h1>
     ${this.onNavTagClick === 'show-description' && tag.description
       ? html`
         <div class="m-markdown">
@@ -67,7 +67,7 @@ export default function focusedEndpointTemplate() {
   if (focusElId.startsWith('overview') && this.showInfo === 'true') {
     focusedTemplate = overviewTemplate.call(this);
   } else if (focusElId === 'auth' && this.allowAuthentication === 'true') {
-    focusedTemplate = securitySchemeTemplate.call(this);
+    focusedTemplate = securitySchemeTemplate.call(this, this.allowTry);
   } else if (focusElId === 'servers' && this.allowServerSelection === 'true') {
     focusedTemplate = serverTemplate.call(this);
   } else if (focusElId === 'operations-top') {
@@ -85,9 +85,9 @@ export default function focusedEndpointTemplate() {
     } else {
       focusedTemplate = defaultContentTemplate.call(this);
     }
-  } else if (focusElId.startsWith('x-') && this.showInfo === 'true') {
+  } else if (focusElId.startsWith('x-section-') && this.showInfo === 'true') {
     const idToFocus = focusElId.indexOf('--', 4) > 0 ? focusElId.substring(0, focusElId.indexOf('--', 5)) : focusElId;
-    focusedTemplate = extensionsTemplate.call(this, idToFocus);
+    focusedTemplate = extensionSectionTemplate.call(this, idToFocus);
   } else {
     for (i = 0; i < this.resolvedSpec.tags.length; i += 1) {
       selectedTagObj = this.resolvedSpec.tags[i];
@@ -100,7 +100,10 @@ export default function focusedEndpointTemplate() {
       // In focused mode we must expand the nav-bar tag element if it is collapsed
       const newNavEl = this.shadowRoot.getElementById(`link-${focusElId}`);
       expandCollapseNavBarTag(newNavEl, 'expand');
-      focusedTemplate = wrapFocusedTemplate.call(this, expandedEndpointBodyTemplate.call(this, selectedPathObj, selectedTagObj.name));
+      focusedTemplate = wrapFocusedTemplate.call(
+        this,
+        expandedEndpointBodyTemplate.call(this, selectedPathObj, (selectedTagObj.name || ''), (selectedTagObj.description || '')),
+      );
     } else {
       // if focusedElementId is not found then show the default content (overview or first-path)
       focusedTemplate = defaultContentTemplate.call(this);
