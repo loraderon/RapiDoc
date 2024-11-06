@@ -242,16 +242,21 @@ export default function navbarTemplate() {
       ${(this.showInfo && this.resolvedSpec.info && this.resolvedSpec.extensionSections?.length > 0) ? html`
         ${this.resolvedSpec.extensionSections.map((extensionSection) => ((this.infoDescriptionHeadingsInNavBar === 'true')
               ? html`
+                <hr style='border-top: 1px solid var(--nav-hover-bg-color); border-width:1px 0 0 0; margin: 15px 0 0 0'/>
+                ${extensionSection.headers.length > 1 ? html`
                 <div class='nav-bar-section'>
                   <div style="display:flex; margin-left:10px;"></div>
                   <div class='nav-bar-section-title' style="cursor: pointer;" data-content-id='${extensionSection.name}' @click = '${(e) => this.scrollToEventTarget(e, false)}'> ${extensionSection.name.replace('x-section-', '').toUpperCase()} </div>
-                </div>      
+                </div>` : ''}
                 <div class="extensions-headers">
                   <div class="${extensionSection.name}-headers">
-                    ${extensionSection.headers.length === 0 ? html`<div id="link-${extensionSection.name}" class='nav-bar-h1 left-bar' data-content-id='${extensionSection.name}' @click = '${(e) => this.scrollToEventTarget(e, false)}'>${extensionSection.name.replace('x-section-', '').toUpperCase()}</div>` : ''}
+                    ${extensionSection.headers.length === 0 ? html`<div id="link-${extensionSection.name}" class='nav-bar-h1 left-bar' data-content-id='${extensionSection.name}' @click = '${(e) => this.scrollToEventTarget(e, false)}'>${extensionSection.name.replace('x-section-', '')}</div>` : ''}
                     ${extensionSection.headers.map((header) => html`
                       <div 
-                        class='nav-bar-h${header.depth} left-bar' 
+                        part="section-navbar-item section-navbar-path" 
+                        data-action="navigate" 
+                        class='nav-bar-path left-bar' 
+                        style="padding-left:${header.depth * 10}px;"
                         id="link-${extensionSection.name}--${new marked.Slugger().slug(header.text)}"  
                         data-content-id='${extensionSection.name}--${new marked.Slugger().slug(header.text)}' 
                         @click='${(e) => this.scrollToEventTarget(e, false)}'
@@ -259,8 +264,7 @@ export default function navbarTemplate() {
                         ${header.text}
                       </div>`)
                     }
-                  </div>
-                  ${extensionSection.headers.length > 1 ? html`<hr style='border-top: 1px solid var(--nav-hover-bg-color); border-width:1px 0 0 0; margin: 15px 0 0 0'/>` : ''}
+                  </div>                  
                 </div>
               `
               : html`<div class='nav-bar-info'  id='link-${extensionSection.name}' data-content-id='${extensionSection.name}' @click = '${(e) => this.scrollToEventTarget(e, false)}'> ${extensionSection.name.replace('x-section-', '')} </div>`))}    

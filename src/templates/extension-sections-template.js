@@ -5,7 +5,7 @@ import { marked } from 'marked';
 /* eslint-disable indent */
 function headingRenderer(extension) {
   const renderer = new marked.Renderer();
-  renderer.heading = (text, level, raw, slugger) => `<h${level} class="observe-me" id="${extension}--${slugger.slug(
+  renderer.heading = (text, level, raw, slugger) => `<h${level} class="${level <= 2 ? 'observe-me' : ''}" id="${extension}--${slugger.slug(
       raw,
     )}">${text}</h${level}>`;
   return renderer;
@@ -28,6 +28,7 @@ export function extensionSectionTemplate(extensionSection) {
       class="observe-me ${this.renderStyle === 'view'
         ? 'section-gap'
         : 'section-gap--read-mode'}"
+      style="border-top:1px solid var(--primary-color);"
     >
       ${extensionSection.headers.length === 0
         ? html`<h1>
