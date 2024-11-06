@@ -32,9 +32,7 @@ export function extensionSectionTemplate(extensionSection) {
     >
       ${extensionSection.headers.length === 0
         ? html`<h1>
-            ${extensionSection.name
-              .replace('x-section-', '')
-              .toLocaleUpperCase()}
+            ${extensionSection.name.replace('x-section-', '')}
           </h1>`
         : ''}
       <slot name="${extensionSection.name}"></slot>
