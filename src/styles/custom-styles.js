@@ -9,4 +9,11 @@ export default css`
   .m-markdown p:not(:first-child) {
     margin-block-start: 6px;
   }
+  
+  a {
+    color: var(--brand-friendly) !important;    
+  }
+  a:hover {
+    color: var(--brand-flow) !important;
+  }
 `;
