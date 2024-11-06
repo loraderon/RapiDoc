@@ -16,4 +16,8 @@ export default css`
   a:hover {
     color: var(--brand-flow) !important;
   }
+  
+  .m-markdown code {
+    color: var(--brand-innovation);
+  }
 `;
