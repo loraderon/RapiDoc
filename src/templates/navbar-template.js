@@ -263,7 +263,7 @@ export default function navbarTemplate() {
                   ${extensionSection.headers.length > 1 ? html`<hr style='border-top: 1px solid var(--nav-hover-bg-color); border-width:1px 0 0 0; margin: 15px 0 0 0'/>` : ''}
                 </div>
               `
-              : html`<div class='nav-bar-info'  id='link-${extensionSection.name}' data-content-id='${extensionSection.name}' @click = '${(e) => this.scrollToEventTarget(e, false)}'> ${extensionSection.name.replace('x-', '')} </div>`))}    
+              : html`<div class='nav-bar-info'  id='link-${extensionSection.name}' data-content-id='${extensionSection.name}' @click = '${(e) => this.scrollToEventTarget(e, false)}'> ${extensionSection.name.replace('x-section-', '')} </div>`))}    
       ` : ''}
 
       <!-- COMPONENTS -->
